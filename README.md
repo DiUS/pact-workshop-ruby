@@ -117,14 +117,12 @@ client_spec.rb:
         expect(subject.process_data).to eql([1, Time.parse(json_data['date'])])
       end
 
-
     end
 
 Let's run this spec and see it all pass:
 
     $ rake spec
     /Users/ronald/.rvm/rubies/ruby-1.9.3-p448/bin/ruby -S rspec ./spec/client_spec.rb
-
 
     Client
     http://localhost:8081/producer.json?valid_date=Fri,%2016%20Aug%202013%2005:44:41%20GMT
