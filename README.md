@@ -25,7 +25,7 @@ client.rb:
 
 
       def load_provider_json
-        response = HTTParty.get(URI::encode('http://localhost:8081/producer.json?valid_date=' + Time.now.httpdate))
+        response = HTTParty.get(URI::encode('http://localhost:8081/provider.json?valid_date=' + Time.now.httpdate))
         if response.success?
           JSON.parse(response.body)
         end
