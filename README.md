@@ -548,7 +548,7 @@ Finished in 0.13973 seconds (files took 0.1671 seconds to load)
 
 Running the verification against the provider now passes. Yay!
 
-```
+```console
 14:23 $ rake pact:verify
 SPEC_OPTS='' /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -S pact verify --pact-helper /home/ronald/Development/Projects/Pact/pact-workshop-ruby/spec/pact_helper.rb
 Reading pact at spec/pacts/our_consumer-our_provider.json
@@ -564,4 +564,94 @@ Verifying a pact between Our Consumer and Our Provider
             "Content-Type" with value "application/json"
 
 1 interaction, 0 failures
+```
+
+# Step 8 - Test for the missing query parameter
+
+In this step we are going to add a test for the case where the query parameter is missing or invalid. We do
+this by adding additional expectations.
+
+First, we need to update out client to take the date as a parameter.
+
+lib/client.rb:
+
+```ruby
+def load_provider_json(query_date)
+  response = HTTParty.get(URI::encode("http://#{base_uri}/provider.json?valid_date=#{query_date}"))
+  if response.success?
+    JSON.parse(response.body)
+  end
+end
+
+def process_data(query_date)
+  data = load_provider_json(query_date)
+  ap data
+  if data
+    value = 100 / data['count']
+    date = Time.parse(data['valid_date'])
+    puts value
+    puts date
+    [value, date]
+  else
+    [0, nil]
+  end
+end
+```
+
+spec/client_spec.rb:
+
+```ruby
+describe "handling invalid responses" do
+
+  it "handles a missing date parameter" do
+    our_provider.given("data count is > 0").
+      upon_receiving("a request with a missing date parameter").
+      with(method: :get, path: '/provider.json').
+      will_respond_with(status: 400)
+    expect(subject.process_data(nil)).to eql([0, nil])
+  end
+
+  it "handles an invalid date parameter" do
+    our_provider.given("data count is > 0").
+      upon_receiving("a request with an invalid date parameter").
+      with(method: :get, path: '/provider.json', query: 'valid_date=This%20is%20not%20a%20date').
+      will_respond_with(status: 400)
+    expect(subject.process_data('This is not a date')).to eql([0, nil])
+  end
+
+end
+```
+
+After running our specs, the pact file will have 2 new interactions.
+
+spec/pacts/our_consumer-our_provider.json:
+
+```json
+{
+  "description": "a request with a missing date parameter",
+  "provider_state": "data count is > 0",
+  "request": {
+    "method": "get",
+    "path": "/provider.json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+    }
+  }
+},
+{
+  "description": "a request with an invalid date parameter",
+  "provider_state": "data count is > 0",
+  "request": {
+    "method": "get",
+    "path": "/provider.json",
+    "query": "valid_date=This%20is%20not%20a%20date"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+    }
+  }
+}
 ```

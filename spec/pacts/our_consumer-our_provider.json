@@ -12,7 +12,7 @@
       "request": {
         "method": "get",
         "path": "/provider.json",
-        "query": "valid_date=Sun,%2020%20Mar%202016%2003:21:16%20GMT"
+        "query": "valid_date=Sun,%2020%20Mar%202016%2003:50:36%20GMT"
       },
       "response": {
         "status": 200,
@@ -32,6 +32,33 @@
           "$.body.count": {
             "match": "type"
           }
+        }
+      }
+    },
+    {
+      "description": "a request with a missing date parameter",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+        }
+      }
+    },
+    {
+      "description": "a request with an invalid date parameter",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=This%20is%20not%20a%20date"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
         }
       }
     }
