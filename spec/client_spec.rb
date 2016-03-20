@@ -53,7 +53,11 @@ describe Client do
         our_provider.given("data count is > 0").
           upon_receiving("a request with a missing date parameter").
           with(method: :get, path: '/provider.json').
-          will_respond_with(status: 400)
+          will_respond_with(
+            status: 400,
+            headers: {'Content-Type' => 'application/json'},
+            body: "valid_date is required"
+          )
         expect(subject.process_data(nil)).to eql([0, nil])
       end
 
@@ -61,7 +65,11 @@ describe Client do
         our_provider.given("data count is > 0").
           upon_receiving("a request with an invalid date parameter").
           with(method: :get, path: '/provider.json', query: 'valid_date=This%20is%20not%20a%20date').
-          will_respond_with(status: 400)
+          will_respond_with(
+            status: 400,
+            headers: {'Content-Type' => 'application/json'},
+            body: "'This is not a date' is not a date"
+          )
         expect(subject.process_data('This is not a date')).to eql([0, nil])
       end
 

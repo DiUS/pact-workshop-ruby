@@ -601,24 +601,28 @@ end
 spec/client_spec.rb:
 
 ```ruby
-describe "handling invalid responses" do
+it "handles a missing date parameter" do
+  our_provider.given("data count is > 0").
+    upon_receiving("a request with a missing date parameter").
+    with(method: :get, path: '/provider.json').
+    will_respond_with(
+      status: 400,
+      headers: {'Content-Type' => 'application/json'},
+      body: "valid_date is required"
+    )
+  expect(subject.process_data(nil)).to eql([0, nil])
+end
 
-  it "handles a missing date parameter" do
-    our_provider.given("data count is > 0").
-      upon_receiving("a request with a missing date parameter").
-      with(method: :get, path: '/provider.json').
-      will_respond_with(status: 400)
-    expect(subject.process_data(nil)).to eql([0, nil])
-  end
-
-  it "handles an invalid date parameter" do
-    our_provider.given("data count is > 0").
-      upon_receiving("a request with an invalid date parameter").
-      with(method: :get, path: '/provider.json', query: 'valid_date=This%20is%20not%20a%20date').
-      will_respond_with(status: 400)
-    expect(subject.process_data('This is not a date')).to eql([0, nil])
-  end
-
+it "handles an invalid date parameter" do
+  our_provider.given("data count is > 0").
+    upon_receiving("a request with an invalid date parameter").
+    with(method: :get, path: '/provider.json', query: 'valid_date=This%20is%20not%20a%20date').
+    will_respond_with(
+      status: 400,
+      headers: {'Content-Type' => 'application/json'},
+      body: "'This is not a date' is not a date"
+    )
+  expect(subject.process_data('This is not a date')).to eql([0, nil])
 end
 ```
 
@@ -637,7 +641,9 @@ spec/pacts/our_consumer-our_provider.json:
   "response": {
     "status": 400,
     "headers": {
-    }
+      "Content-Type": "application/json"
+    },
+    "body": "valid_date is required"
   }
 },
 {
@@ -651,7 +657,9 @@ spec/pacts/our_consumer-our_provider.json:
   "response": {
     "status": 400,
     "headers": {
-    }
+      "Content-Type": "application/json"
+    },
+    "body": "'This is not a date' is not a date"
   }
 }
 ```

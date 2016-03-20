@@ -12,7 +12,7 @@
       "request": {
         "method": "get",
         "path": "/provider.json",
-        "query": "valid_date=Sun,%2020%20Mar%202016%2003:50:36%20GMT"
+        "query": "valid_date=Sun,%2020%20Mar%202016%2004:04:59%20GMT"
       },
       "response": {
         "status": 200,
@@ -45,7 +45,9 @@
       "response": {
         "status": 400,
         "headers": {
-        }
+          "Content-Type": "application/json"
+        },
+        "body": "valid_date is required"
       }
     },
     {
@@ -59,7 +61,9 @@
       "response": {
         "status": 400,
         "headers": {
-        }
+          "Content-Type": "application/json"
+        },
+        "body": "'This is not a date' is not a date"
       }
     }
   ],
