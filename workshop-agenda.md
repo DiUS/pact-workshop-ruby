@@ -12,4 +12,6 @@
 6. Update the consumer test
 7. Verify the provider again
 8. Test for the missing query parameter in the consumer
-9.
+9. Verify the provider with missing dates
+10. Provider states
+11. Provider states for the provider
