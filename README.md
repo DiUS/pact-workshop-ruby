@@ -84,7 +84,7 @@ client.rb
       def process_data
         data = load_provider_json
         ap data
-        value = data['count'] / 100
+        value = 100 / data['count']
         date = Time.parse(data['date'])
         puts value
         puts date
@@ -125,7 +125,7 @@ Let's run this spec and see it all pass:
     /Users/ronald/.rvm/rubies/ruby-1.9.3-p448/bin/ruby -S rspec ./spec/client_spec.rb
 
     Client
-    http://localhost:8081/producer.json?valid_date=Fri,%2016%20Aug%202013%2005:44:41%20GMT
+    http://localhost:8081/provider.json?valid_date=Fri,%2016%20Aug%202013%2005:44:41%20GMT
     {
          "test" => "NO",
          "date" => "2013-08-16T15:31:20+10:00",
