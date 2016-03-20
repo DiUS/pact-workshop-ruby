@@ -10,4 +10,5 @@
 4. Verify pact against provider
 5. Correct provider states
 6. Update the consumer test
-7. 
+7. Verify the provider again
+8. 
