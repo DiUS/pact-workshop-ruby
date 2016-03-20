@@ -12,7 +12,7 @@
       "request": {
         "method": "get",
         "path": "/provider.json",
-        "query": "valid_date=Sun,%2020%20Mar%202016%2004:04:59%20GMT"
+        "query": "valid_date=Sun,%2020%20Mar%202016%2004:46:40%20GMT"
       },
       "response": {
         "status": 200,
@@ -64,6 +64,20 @@
           "Content-Type": "application/json"
         },
         "body": "'This is not a date' is not a date"
+      }
+    },
+    {
+      "description": "a request for json data",
+      "provider_state": "data count is == 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=Sun,%2020%20Mar%202016%2004:46:40%20GMT"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+        }
       }
     }
   ],
