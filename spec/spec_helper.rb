@@ -1,3 +1,2 @@
 require 'ap'
-
-# $:.unshift 'lib'
+require 'pact_helper'

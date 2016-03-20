@@ -17,6 +17,7 @@ Given we have a client that needs to make a HTTP GET request to a sinatra webapp
 
 client.rb:
 
+```ruby
     require 'httparty'
     require 'uri'
     require 'json'
@@ -33,10 +34,12 @@ client.rb:
 
 
     end
+```
 
 and the provider:
 provider.rb
 
+```ruby
     require 'sinatra/base'
     require 'json'
 
@@ -54,33 +57,33 @@ provider.rb
       end
 
     end
-
+```
 
 This provider expects a valid_date parameter in HTTP date format, and then returns some simple json back.
 
 Running the client with the following rake task against the provider works nicely:
 
+```ruby
     desc 'Run the client'
     task :run_client => :init do
       require 'client'
       require 'ap'
       ap Client.new.load_provider_json
     end
-
+```
 
     $ rake run_client
-    http://localhost:8081/provider.json?valid_date=Thu,%2015%20Aug%202013%2003:15:15%20GMT
     {
               "test" => "NO",
-        "valid_date" => "2013-08-15T13:31:39+10:00",
+        "valid_date" => "2016-03-20T13:00:11+11:00",
              "count" => 1000
     }
-
 
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
 client.rb
 
+```ruby
       def process_data
         data = load_provider_json
         ap data
@@ -90,11 +93,13 @@ client.rb
         puts date
         [value, date]
       end
+```
 
 Add a spec to test this client:
 
 client_spec.rb:
 
+```ruby
     require 'spec_helper'
     require 'client'
 
@@ -118,14 +123,14 @@ client_spec.rb:
       end
 
     end
+```
 
 Let's run this spec and see it all pass:
 
     $ rake spec
-    /Users/ronald/.rvm/rubies/ruby-1.9.3-p448/bin/ruby -S rspec ./spec/client_spec.rb
+    /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
     Client
-    http://localhost:8081/provider.json?valid_date=Fri,%2016%20Aug%202013%2005:44:41%20GMT
     {
          "test" => "NO",
          "date" => "2013-08-16T15:31:20+10:00",
@@ -135,8 +140,7 @@ Let's run this spec and see it all pass:
     2013-08-16 15:31:20 +1000
       can process the json payload from the provider
 
-
-    Finished in 0.00409 seconds
+    Finished in 0.00582 seconds (files took 0.09577 seconds to load)
     1 example, 0 failures
 
 However, there is a problem with this integration point. The provider returns a 'valid_date' while the consumer is trying to use 'date', which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
@@ -145,15 +149,19 @@ However, there is a problem with this integration point. The provider returns a 
 
 Lets setup Pact in the consumer. Pact lets the consumers define the expectations for the integration point.
 
-spec_helper.rb:
+pact_helper.rb:
 
-    Pact.service_consumer "My Consumer" do
-      has_pact_with "My Provider" do
-        mock_service :my_provider do
-          port 1234
-        end
-      end
+```ruby
+require 'pact/consumer/rspec'
+
+Pact.service_consumer "Our Consumer" do
+  has_pact_with "Our Provider" do
+    mock_service :our_provider do
+      port 1234
     end
+  end
+end
+```
 
 This defines a consumer and a producer that runs on port 1234.
 
@@ -161,99 +169,99 @@ The spec for the client now has a pact section.
 
 client_spec.rb:
 
-    describe 'pact with provider', :pact => true do
+```ruby
+describe 'Pact with our provider', :pact => true do
 
-      let(:date) { Time.now.httpdate }
+  subject { Client.new('localhost:1234') }
 
-      before do
-        my_provider.
-          given("provider is in a sane state").
-            upon_receiving("a request for provider json").
-              with({
-                  method: :get,
-                  path: '/provider.json',
-                  query: URI::encode('valid_date=' + date)
-              }).
-              will_respond_with({
-                status: 200,
-                headers: { 'Content-Type' => 'application/json' },
-                body: json_data
-              })
-      end
+  let(:date) { Time.now.httpdate }
 
-      it 'can process the json payload from the provider' do
-        expect(subject.process_data).to eql([1, Time.parse(json_data['date'])])
-      end
+  describe "get json data" do
 
+    before do
+      our_provider.given("data count is > 0").
+        upon_receiving("a request for json data").
+        with(method: :get, path: '/provider.json', query: URI::encode('valid_date=' + date)).
+        will_respond_with(
+          status: 200,
+          headers: {'Content-Type' => 'application/json'},
+          body: json_data )
     end
 
+    it "can process the json payload from the provider" do
+      expect(subject.process_data).to eql([1, Time.parse(json_data['date'])])
+    end
+
+  end
+
+end
+```
 
 Running this spec still passes, but it creates a pact file which we can use to validate our assumptions on the provider side.
 
     $ rake spec
-    /Users/ronald/.rvm/rubies/ruby-1.9.3-p448/bin/ruby -S rspec ./spec/client_spec.rb
-
+    /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
     Client
-    http://localhost:8081/provider.json?valid_date=Fri,%2016%20Aug%202013%2006:09:44%20GMT
     {
-      "test"  => "NO",
-      "date"  => "2013-08-16T15:31:20+10:00",
-      "count" => 100
+         "test" => "NO",
+         "date" => "2013-08-16T15:31:20+10:00",
+        "count" => 100
     }
     1
     2013-08-16 15:31:20 +1000
       can process the json payload from the provider
-      pact with provider
-    http://localhost:8081/provider.json?valid_date=Fri,%2016%20Aug%202013%2006:09:44%20GMT
+      Pact with our provider
+        get json data
     {
-      "test"  => "NO",
-      "date"  => "2013-08-16T15:31:20+10:00",
-      "count" => 100
+         "test" => "NO",
+         "date" => "2013-08-16T15:31:20+10:00",
+        "count" => 100
     }
     1
     2013-08-16 15:31:20 +1000
-        can process the json payload from the provider
+          can process the json payload from the provider
 
+    Finished in 0.12844 seconds (files took 0.17281 seconds to load)
+    2 examples, 0 failures
 
-Generated pact file (spec/pacts/my_consumer-my_provider.json):
+Generated pact file (spec/pacts/our_consumer-our_provider.json):
 
+```json
+{
+  "consumer": {
+    "name": "Our Consumer"
+  },
+  "provider": {
+    "name": "Our Provider"
+  },
+  "interactions": [
     {
-      "provider": {
-        "name": "My Producer"
+      "description": "a request for json data",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT"
       },
-      "consumer": {
-        "name": "My Consumer"
-      },
-      "interactions": [
-        {
-          "description": "a request for provider json",
-          "request": {
-            "method": "get",
-            "path": "/provider.json",
-            "query": "valid_date=Fri,%2016%20Aug%202013%2006:09:44%20GMT"
-          },
-          "response": {
-            "status": 200,
-            "headers": {
-              "Content-Type": "application/json"
-            },
-            "body": {
-              "test": "NO",
-              "date": "2013-08-16T15:31:20+10:00",
-              "count": 100
-            }
-          },
-          "provider_state": "provider is in a sane state"
-        }
-      ],
-      "metadata": {
-        "date": "2013-08-16T16:09:44+10:00",
-        "pact_gem": {
-          "version": "0.1.23"
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "test": "NO",
+          "date": "2013-08-16T15:31:20+10:00",
+          "count": 100
         }
       }
     }
+  ],
+  "metadata": {
+    "pactSpecificationVersion": "1.0.0"
+  }
+}
+```
 
 #Provider Setup#
 
