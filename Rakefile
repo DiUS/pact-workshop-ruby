@@ -12,6 +12,7 @@ rescue Bundler::BundlerError => e
 end
 
 require 'rake'
+require 'pact/tasks'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec)
 

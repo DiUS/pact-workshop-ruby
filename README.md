@@ -269,53 +269,120 @@ Pact has a rake task to verify the producer against the generated pact file. It 
 
 Rakefile:
 
-    require 'pact/tasks'
+```ruby
+require 'pact/tasks'
+```
 
-spec/service_consumers/pact_helper.rb:
+spec/pact_helper.rb:
 
-    require 'pact/provider/rspec'
+```ruby
+require 'pact/provider/rspec'
 
-    Pact.service_provider "My Provider" do
+Pact.service_provider "Our Provider" do
 
-      honours_pact_with 'My Consumer' do
+  honours_pact_with 'Our Consumer' do
+    pact_uri 'spec/pacts/our_consumer-our_provider.json'
+  end
 
-        # This example points to a local file, however, on a real project with a continuous
-        # integration box, you would use a [Pact Broker](https://github.com/bethesque/pact_broker) or publish your pacts as artifacts,
-        # and point the pact_uri to the pact published by the last successful build.
-
-        pact_uri '../pacts/my_consumer-my_provider.json'
-      end
-    end
+end
+```
 
 Now if we run our pact verification task, it should fail.
 
     $ rake pact:verify
+    SPEC_OPTS='' /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -S pact verify --pact-helper /home/ronald/Development/Projects/Pact/pact-workshop-ruby/spec/pact_helper.rb
+    Reading pact at spec/pacts/our_consumer-our_provider.json
 
-
-    Pact in spec/pacts/my_consumer-my_provider.json
-      Given producer is in a sane state
-        a request for provider json to /provider.json
-          returns a response which
-            has status code 200
-            has a matching body (FAILED - 1)
-            includes headers
-              "Content-Type" with value "application/json" (FAILED - 2)
-
+    Verifying a pact between Our Consumer and Our Provider
+      Given data count is > 0
+        a request for json data
+          with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT
+            returns a response which
+              has status code 200 (FAILED - 1)
+              has a matching body (FAILED - 2)
+              includes headers
+                "Content-Type" with value "application/json" (FAILED - 3)
 
     Failures:
 
+      1) Verifying a pact between Our Consumer and Our Provider Given data count is > 0 a request for json data with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT returns a response which has status code 200
+         Got 0 failures and 2 other errors:
 
-      1) Pact in spec/pacts/my_consumer-my_provider.json Given provider is in a sane state a request for provider json to /provider.json returns a response which has a matching body
-         Failure/Error: expect(parse_entity_from_response(last_response)).to match_term response['body']
-           {
-             "date"  => {
-               :expected => "2013-08-16T15:31:20+10:00",
-               :actual   => nil
-             },
-             "count" => {
-               :expected => 100,
-               :actual   => 1000
-             }
-           }
+         1.1) Failure/Error: set_up_provider_state interaction.provider_state, options[:consumer]
 
-Looks like we need to update the producer to return 'date' instead of 'valid_date', we also need to update the client expectation to return 1000 for the count and the correct content type (we expected application/json but got application/json;charset=utf-8). Doing this, and we now have fast unit tests on each side of the integration point instead of tedious integration tests.
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+         1.2) Failure/Error: tear_down_provider_state interaction.provider_state, options[:consumer]
+
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+      2) Verifying a pact between Our Consumer and Our Provider Given data count is > 0 a request for json data with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT returns a response which has a matching body
+         Got 0 failures and 2 other errors:
+
+         2.1) Failure/Error: set_up_provider_state interaction.provider_state, options[:consumer]
+
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+         2.2) Failure/Error: tear_down_provider_state interaction.provider_state, options[:consumer]
+
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+      3) Verifying a pact between Our Consumer and Our Provider Given data count is > 0 a request for json data with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT returns a response which includes headers "Content-Type" with value "application/json"
+         Got 0 failures and 2 other errors:
+
+         3.1) Failure/Error: set_up_provider_state interaction.provider_state, options[:consumer]
+
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+         3.2) Failure/Error: tear_down_provider_state interaction.provider_state, options[:consumer]
+
+              RuntimeError:
+                Could not find provider state "data count is > 0" for consumer Our Consumer
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+              # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+    1 interaction, 1 failure
+
+    Failed interactions:
+
+    bundle exec rake pact:verify:at[spec/pacts/our_consumer-our_provider.json] PACT_DESCRIPTION="a request for json data" PACT_PROVIDER_STATE="data count is > 0" # A request for json data given data count is > 0
+
+    For assistance debugging failures, run `bundle exec rake pact:verify:help`
+
+    Could not find one or more provider states.
+    Have you required the provider states file for this consumer in your pact_helper.rb?
+    If you have not yet defined these states, here is a template:
+
+    Pact.provider_states_for "Our Consumer" do
+
+      provider_state "data count is > 0" do
+        set_up do
+          # Your set up code goes here
+        end
+      end
+
+    end
+
+This has failed due to the provider state we defined. Luckly pact has been quite helpful and given us a snippet
+of what we need to do to fix it.

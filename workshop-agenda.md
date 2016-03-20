@@ -7,4 +7,4 @@
   * consumer dependent on date format
   * consumer has a potential division by zero
 3. First Pact consumer test
-4. 
+4. Verify pact against provider
