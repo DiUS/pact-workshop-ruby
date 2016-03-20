@@ -8,3 +8,10 @@
   * consumer has a potential division by zero
 3. First Pact consumer test
 4. Verify pact against provider
+5. Correct provider states
+6. Update the consumer test
+7. Verify the provider again
+8. Test for the missing query parameter in the consumer
+9. Verify the provider with missing dates
+10. Provider states
+11. Provider states for the provider
