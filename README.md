@@ -129,6 +129,7 @@ client_spec.rb:
 
 Let's run this spec and see it all pass:
 
+```console
     $ rake spec
     /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
@@ -144,6 +145,7 @@ Let's run this spec and see it all pass:
 
     Finished in 0.00582 seconds (files took 0.09577 seconds to load)
     1 example, 0 failures
+```
 
 However, there is a problem with this integration point. The provider returns a 'valid_date' while the consumer is trying to use 'date', which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
 
@@ -201,6 +203,7 @@ end
 
 Running this spec still passes, but it creates a pact file which we can use to validate our assumptions on the provider side.
 
+```console
     $ rake spec
     /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
@@ -226,6 +229,7 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
     Finished in 0.12844 seconds (files took 0.17281 seconds to load)
     2 examples, 0 failures
+```
 
 Generated pact file (spec/pacts/our_consumer-our_provider.json):
 
@@ -291,6 +295,7 @@ end
 
 Now if we run our pact verification task, it should fail.
 
+```console
     $ rake pact:verify
     SPEC_OPTS='' /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -S pact verify --pact-helper /home/ronald/Development/Projects/Pact/pact-workshop-ruby/spec/pact_helper.rb
     Reading pact at spec/pacts/our_consumer-our_provider.json
@@ -385,6 +390,7 @@ Now if we run our pact verification task, it should fail.
       end
 
     end
+```
 
 This has failed due to the provider state we defined. Luckily pact has been quite helpful and given us a snippet
 of what we need to do to fix it.
@@ -409,6 +415,7 @@ end
 
 and then re-run the provider verification.
 
+```console
     $ rake pact:verify
     SPEC_OPTS='' /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -S pact verify --pact-helper /home/ronald/Development/Projects/Pact/pact-workshop-ruby/spec/pact_helper.rb
     Reading pact at spec/pacts/our_consumer-our_provider.json
@@ -451,5 +458,6 @@ and then re-run the provider verification.
     bundle exec rake pact:verify:at[spec/pacts/our_consumer-our_provider.json] PACT_DESCRIPTION="a request for json data" PACT_PROVIDER_STATE="data count is > 0" # A request for json data given data count is > 0
 
     For assistance debugging failures, run `bundle exec rake pact:verify:help`
+```
 
 The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. Secondly, and more importantly, the consumer was expecting a date field.
