@@ -11,7 +11,7 @@ Pact is a ruby gem that allows you to define a pact between service consumers an
 
 This allows you to test both sides of an integration point using fast unit tests.
 
-#Example Pact use#
+## Step 1 - Simple customer calling Provider
 
 Given we have a client that needs to make a HTTP GET request to a sinatra webapp, and requires a response in JSON format. The client would look something like:
 
@@ -79,6 +79,8 @@ Running the client with the following rake task against the provider works nicel
              "count" => 1000
     }
 
+## Step 2 - Client Tested but integration fails
+
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
 client.rb
@@ -145,7 +147,7 @@ Let's run this spec and see it all pass:
 
 However, there is a problem with this integration point. The provider returns a 'valid_date' while the consumer is trying to use 'date', which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
 
-#Pact to the rescue#
+## Step 3 - Pact to the rescue
 
 Lets setup Pact in the consumer. Pact lets the consumers define the expectations for the integration point.
 
@@ -263,7 +265,7 @@ Generated pact file (spec/pacts/our_consumer-our_provider.json):
 }
 ```
 
-#Provider Setup#
+## Step 4 - Verify pact against provider
 
 Pact has a rake task to verify the producer against the generated pact file. It can get the pact file from any URL (like the last successful CI build), but we just going to use the local one. Here is the addition to the Rakefile.
 
@@ -384,5 +386,70 @@ Now if we run our pact verification task, it should fail.
 
     end
 
-This has failed due to the provider state we defined. Luckly pact has been quite helpful and given us a snippet
+This has failed due to the provider state we defined. Luckily pact has been quite helpful and given us a snippet
 of what we need to do to fix it.
+
+## Step 5 - Correct provider states
+
+Add the snippet from the verification failure to the pact helper.
+
+spec/pact_helper.rb:
+
+```ruby
+Pact.provider_states_for "Our Consumer" do
+
+  provider_state "data count is > 0" do
+    set_up do
+      # Your set up code goes here
+    end
+  end
+
+end
+```
+
+and then re-run the provider verification.
+
+    $ rake pact:verify
+    SPEC_OPTS='' /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -S pact verify --pact-helper /home/ronald/Development/Projects/Pact/pact-workshop-ruby/spec/pact_helper.rb
+    Reading pact at spec/pacts/our_consumer-our_provider.json
+
+    Verifying a pact between Our Consumer and Our Provider
+      Given data count is > 0
+        a request for json data
+          with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT
+            returns a response which
+              has status code 200
+              has a matching body (FAILED - 1)
+              includes headers
+                "Content-Type" with value "application/json"
+
+    Failures:
+
+      1) Verifying a pact between Our Consumer and Our Provider Given data count is > 0 a request for json data with GET /provider.json?valid_date=Sun,%2020%20Mar%202016%2002:07:13%20GMT returns a response which has a matching body
+         Failure/Error: expect(response_body).to match_term expected_response_body, diff_options
+
+           Actual: {"test":"NO","valid_date":"2016-03-20T13:36:31+11:00","count":1000}
+
+           @@ -1,5 +1,4 @@
+            {
+           -  "date": "2013-08-16T15:31:20+10:00",
+           -  "count": 100
+           +  "count": 1000
+            }
+
+           Key: - means "expected, but was not found".
+                + means "actual, should not be found".
+                Values where the expected matches the actual are not shown.
+         # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/pact-1.9.0/bin/pact:4:in `<top (required)>'
+         # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `load'
+         # /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/bin/pact:23:in `<main>'
+
+    1 interaction, 1 failure
+
+    Failed interactions:
+
+    bundle exec rake pact:verify:at[spec/pacts/our_consumer-our_provider.json] PACT_DESCRIPTION="a request for json data" PACT_PROVIDER_STATE="data count is > 0" # A request for json data given data count is > 0
+
+    For assistance debugging failures, run `bundle exec rake pact:verify:help`
+
+The test has failed for 2 reasons. Firstly, the count field has a different value to what was expected by the consumer. Secondly, and more importantly, the consumer was expecting a date field.

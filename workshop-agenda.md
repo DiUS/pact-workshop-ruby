@@ -8,3 +8,5 @@
   * consumer has a potential division by zero
 3. First Pact consumer test
 4. Verify pact against provider
+5. Correct provider states
+6. 
