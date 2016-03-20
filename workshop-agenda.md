@@ -9,4 +9,5 @@
 3. First Pact consumer test
 4. Verify pact against provider
 5. Correct provider states
-6. 
+6. Update the consumer test
+7. 
