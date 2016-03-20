@@ -11,7 +11,7 @@ Pact is a ruby gem that allows you to define a pact between service consumers an
 
 This allows you to test both sides of an integration point using fast unit tests.
 
-#Example Pact use#
+## Step 1 - Simple customer calling Provider
 
 Given we have a client that needs to make a HTTP GET request to a sinatra webapp, and requires a response in JSON format. The client would look something like:
 
@@ -79,6 +79,8 @@ Running the client with the following rake task against the provider works nicel
              "count" => 1000
     }
 
+## Step 2 - Client Tested but integration fails
+
 Now lets get the client to use the data it gets back from the provider. Here is the updated client method that uses the returned data:
 
 client.rb
@@ -127,6 +129,7 @@ client_spec.rb:
 
 Let's run this spec and see it all pass:
 
+```console
     $ rake spec
     /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
@@ -142,10 +145,11 @@ Let's run this spec and see it all pass:
 
     Finished in 0.00582 seconds (files took 0.09577 seconds to load)
     1 example, 0 failures
+```
 
 However, there is a problem with this integration point. The provider returns a 'valid_date' while the consumer is trying to use 'date', which will blow up when run for real even with the tests all passing. Here is where Pact comes in.
 
-#Pact to the rescue#
+## Step 3 - Pact to the rescue
 
 Lets setup Pact in the consumer. Pact lets the consumers define the expectations for the integration point.
 
@@ -199,6 +203,7 @@ end
 
 Running this spec still passes, but it creates a pact file which we can use to validate our assumptions on the provider side.
 
+```console
     $ rake spec
     /home/ronald/.rvm/rubies/ruby-2.3.0/bin/ruby -I/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/lib:/home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-support-3.4.1/lib /home/ronald/.rvm/gems/ruby-2.3.0@example_pact/gems/rspec-core-3.4.3/exe/rspec --pattern spec/\*\*\{,/\*/\*\*\}/\*_spec.rb
 
@@ -224,6 +229,7 @@ Running this spec still passes, but it creates a pact file which we can use to v
 
     Finished in 0.12844 seconds (files took 0.17281 seconds to load)
     2 examples, 0 failures
+```
 
 Generated pact file (spec/pacts/our_consumer-our_provider.json):
 
@@ -262,60 +268,3 @@ Generated pact file (spec/pacts/our_consumer-our_provider.json):
   }
 }
 ```
-
-#Provider Setup#
-
-Pact has a rake task to verify the producer against the generated pact file. It can get the pact file from any URL (like the last successful CI build), but we just going to use the local one. Here is the addition to the Rakefile.
-
-Rakefile:
-
-    require 'pact/tasks'
-
-spec/service_consumers/pact_helper.rb:
-
-    require 'pact/provider/rspec'
-
-    Pact.service_provider "My Provider" do
-
-      honours_pact_with 'My Consumer' do
-
-        # This example points to a local file, however, on a real project with a continuous
-        # integration box, you would use a [Pact Broker](https://github.com/bethesque/pact_broker) or publish your pacts as artifacts,
-        # and point the pact_uri to the pact published by the last successful build.
-
-        pact_uri '../pacts/my_consumer-my_provider.json'
-      end
-    end
-
-Now if we run our pact verification task, it should fail.
-
-    $ rake pact:verify
-
-
-    Pact in spec/pacts/my_consumer-my_provider.json
-      Given producer is in a sane state
-        a request for provider json to /provider.json
-          returns a response which
-            has status code 200
-            has a matching body (FAILED - 1)
-            includes headers
-              "Content-Type" with value "application/json" (FAILED - 2)
-
-
-    Failures:
-
-
-      1) Pact in spec/pacts/my_consumer-my_provider.json Given provider is in a sane state a request for provider json to /provider.json returns a response which has a matching body
-         Failure/Error: expect(parse_entity_from_response(last_response)).to match_term response['body']
-           {
-             "date"  => {
-               :expected => "2013-08-16T15:31:20+10:00",
-               :actual   => nil
-             },
-             "count" => {
-               :expected => 100,
-               :actual   => 1000
-             }
-           }
-
-Looks like we need to update the producer to return 'date' instead of 'valid_date', we also need to update the client expectation to return 1000 for the count and the correct content type (we expected application/json but got application/json;charset=utf-8). Doing this, and we now have fast unit tests on each side of the integration point instead of tedious integration tests.
