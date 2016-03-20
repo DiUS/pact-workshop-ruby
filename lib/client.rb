@@ -4,23 +4,31 @@ require 'json'
 
 class Client
 
-  def load_producer_json
-    url = URI::encode('http://localhost:1234/provider.json?valid_date=' + Time.now.httpdate)
-    puts url
-    response = HTTParty.get(url)
+  attr_accessor :base_uri
+
+  def initialize(uri = 'localhost:9292')
+    @base_uri = uri
+  end
+
+  def load_provider_json(query_date)
+    response = HTTParty.get(URI::encode("http://#{base_uri}/provider.json?valid_date=#{query_date}"))
     if response.success?
       JSON.parse(response.body)
     end
   end
 
-  def process_data
-    data = load_producer_json
+  def process_data(query_date)
+    data = load_provider_json(query_date)
     ap data
-    value = data['count'] / 100
-    date = Time.parse(data['date'])
-    puts value
-    puts date
-    [value, date]
+    if data
+      value = 100 / data['count']
+      date = Time.parse(data['valid_date'])
+      puts value
+      puts date
+      [value, date]
+    else
+      [0, nil]
+    end
   end
 
 end

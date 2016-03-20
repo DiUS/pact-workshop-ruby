@@ -12,10 +12,11 @@ rescue Bundler::BundlerError => e
 end
 
 require 'rake'
+require 'pact/tasks'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec)
 
-task :default => [:spec, 'pact:tests']
+task :default => [:spec]
 
 $:.unshift 'lib'
 
@@ -23,12 +24,5 @@ desc 'Run the client'
 task :run_client do
   require 'client'
   require 'ap'
-  Client.new.process_data
+  ap Client.new.process_data
 end
-
-# require 'pact'
-# require 'pact/verification_task'
-#
-# Pact::VerificationTask.new(:local) do | pact |
-#   pact.uri 'spec/pacts/my_consumer-my_provider.json', support_file: './spec/pacts/pact_helper'
-# end

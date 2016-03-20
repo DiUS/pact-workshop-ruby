@@ -1,0 +1,87 @@
+{
+  "consumer": {
+    "name": "Our Consumer"
+  },
+  "provider": {
+    "name": "Our Provider"
+  },
+  "interactions": [
+    {
+      "description": "a request for json data",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=Sun,%2020%20Mar%202016%2004:46:40%20GMT"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "test": "NO",
+          "valid_date": "2013-08-16T15:31:20+10:00",
+          "count": 100
+        },
+        "matchingRules": {
+          "$.body.valid_date": {
+            "match": "regex",
+            "regex": "\\d{4}\\-\\d{2}\\-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+\\d{2}:\\d{2}"
+          },
+          "$.body.count": {
+            "match": "type"
+          }
+        }
+      }
+    },
+    {
+      "description": "a request with a missing date parameter",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "valid_date is required"
+      }
+    },
+    {
+      "description": "a request with an invalid date parameter",
+      "provider_state": "data count is > 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=This%20is%20not%20a%20date"
+      },
+      "response": {
+        "status": 400,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "'This is not a date' is not a date"
+      }
+    },
+    {
+      "description": "a request for json data",
+      "provider_state": "data count is == 0",
+      "request": {
+        "method": "get",
+        "path": "/provider.json",
+        "query": "valid_date=Sun,%2020%20Mar%202016%2004:46:40%20GMT"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecificationVersion": "2.0.0"
+  }
+}
